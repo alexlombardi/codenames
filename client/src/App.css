@@ -1,0 +1,624 @@
+#root {
+    --primary-color: rgb(128, 0, 128);
+}
+
+#root, body, .App {
+    font-family: 'Poppins', sans-serif;
+    width: 100vw;
+    height: 100vh;
+    /*cursor: none;*/
+    overflow: hidden;
+}
+
+* {
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+
+*::-webkit-scrollbar { 
+    display: none;  /* Safari and Chrome */
+}
+
+.gameScreen {
+    position: absolute;
+    top: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 1920px;
+    height: 1080px;
+}
+
+.loginScreen, .roomScreen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.loginApprovalText {
+    position: absolute;
+    top: calc(50% + 68px);
+    width: 400px;
+    font-size: 20px;
+    font-style: italic;
+    font-weight: bold;
+    text-align: center;
+}
+
+.logOutButton {
+    user-select: none;
+    cursor: pointer;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+.cardContainer {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+    width: 1080px;
+    height: 720px;
+    flex-shrink: 0;
+}
+
+.card3dContainer {
+    perspective: 400px;
+}
+
+.card {
+    transform-style: preserve-3d;
+    user-select: none;
+    box-shadow: 0 10px 10px black;
+    width: 200px;
+    height: 120px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    padding: 0;
+    margin: 8px;
+}
+
+.cardFront {
+    font-weight: bold;
+    color: white;
+    width: 200px;
+    height: 120px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid white;
+    border-radius: 8px;
+    padding-left: 5px;
+    padding-right: 5px;
+    text-align: center;
+    word-break: break-word;
+    overflow: hidden;
+}
+
+.cardBack {
+    position: absolute;
+    top: 0;
+    left: 0;
+    text-align: center;
+    word-break: break-word;
+    width: 200px;
+    height: 120px;
+    box-sizing: border-box;
+    padding: 5px;
+    border: 1px solid;
+    border-radius: 8px;
+    transform: translateZ(-0.1px) rotateY(180deg);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.spymasterMark {
+    position: absolute;
+    transform: translateZ(-0.2px) rotateY(180deg);
+    mix-blend-mode: overlay;
+    opacity: 0.6;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+.cardFill {
+    background-size: 200% 200%;
+    animation: cardFill 1s forwards;
+}
+
+@keyframes cardFill {
+    0% {
+        background-position: right top;
+    }
+    100% {
+        background-position: left bottom;
+    }
+}
+
+
+
+
+
+.controlsContainer {
+    position: absolute;
+    bottom: -130px;
+    height: 130px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    width: 100%;
+}
+
+.button {
+    position: relative;
+    font-weight: bold;
+    font-size: 24px;
+    color: white;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 8px;
+    border: 4px solid white;
+    border-radius: 30px;
+    padding: 10px;
+    padding-left: 14px;
+    padding-right: 14px;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    overflow: hidden;
+    animation: fall 0.5s forwards;
+}
+
+.button:hover {
+    animation: rise 0.5s forwards;
+}
+
+.button:not(:hover) > .buttonHoverCircle {
+    display: none;
+}
+
+.buttonHoverCircle {
+    display: none;
+    position: absolute;
+    background-color: white;
+    border-radius: 100%;
+    width: 220%;
+    transition: all 0.5s;
+    animation: buttonHoverCircle 0.4s forwards;
+    z-index: -1;
+    aspect-ratio: 1 / 1;
+}
+
+@keyframes buttonHoverCircle {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.button:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.promptInput {
+    position: relative;
+    font-weight: bold;
+    font-size: 24px;
+    color: black;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 8px;
+    border: 4px solid white;
+    border-radius: 30px;
+    padding: 10px;
+    padding-left: 14px;
+    padding-right: 14px;
+    outline: none;
+    animation: fall 0.5s forwards;
+    background-size: 200% 100%;
+    background-position-x: -100%;
+}
+
+.promptInput:focus {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    animation: rise 0.5s forwards;
+}
+
+@keyframes rise {
+    0% {
+        transform: translateY(0);
+        box-shadow: 0 0 black;
+    }
+    100% {
+        transform: translateY(-10px);
+        box-shadow: 0 10px rgba(0, 0, 0, 0.5);
+    }
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-10px);
+        box-shadow: 0 10px rgba(0, 0, 0, 0.5);
+    }
+    100% {
+        transform: translateY(0);
+        box-shadow: 0 0 black;
+    }
+}
+
+
+
+
+
+
+
+
+
+.cursor {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid white;
+    pointer-events: none;
+}
+
+.clickCircle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid white;
+    pointer-events: none;
+    animation: growThenFade 0.5s forwards;
+}
+
+@keyframes growThenFade {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(10);
+        opacity: 0;
+    }
+}
+
+.userContainer {
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    margin-bottom: 10px;
+    border: 4px solid;
+    padding: 20px;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    border-radius: 30px;
+    margin-bottom: 50px;
+}
+
+.user {
+    height: 50px;
+    min-width: 100px;
+    max-width: 300px;
+    overflow: hidden;
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 30px;
+    padding-left: 5px;
+    padding-right: 5px;
+    box-sizing: border-box;
+}
+
+.teamContainer {
+    user-select: none;
+    position: relative;
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    border: 4px solid;
+    padding: 10px;
+    border-radius: 30px;
+    margin-bottom: 10px;
+    width: 100%;
+}
+
+.teamContainer::before {
+    mix-blend-mode: difference;
+    content: "";
+    border: 4px solid ;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: -4px;
+    border-radius: 30px;
+}
+
+.playerContainer {
+    position: absolute;
+    right: -200px;
+    width: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+.player {
+    position: relative;
+    color: white;
+    font-weight: normal;
+    border-color: white;
+    font-size: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 30px;
+    min-width: 100px;
+    padding: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+    box-sizing: border-box;
+    user-select: none;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    text-align: center;
+    word-break: break-word;
+}
+
+.playerText {
+    z-index: 1;
+}
+
+.spymasterIcon {
+    color: white;
+    mix-blend-mode: overlay;
+    position: absolute;
+    right: 1px;
+    top: 1px;
+}
+
+.roomText {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    left: 10px;
+    font-weight: bold;
+    white-space: nowrap;
+    user-select: none;
+    filter: blur(10px);
+}
+
+.leaveRoomButton {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+}
+
+.scoreMeter {
+    position: absolute;
+    min-width: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    border: 4px solid;
+    border-radius: 30px;
+    padding: 10px;
+    box-sizing: border-box;
+    user-select: none;
+    transition: width 0.5s;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.scoreStar {
+    position: absolute;
+    margin: 0 auto;
+    top: 0;
+    z-index: -10;
+    border-radius: 50%;
+    border: 4px solid black;
+    box-sizing: border-box;
+}
+
+.gameStateContainer {
+    color: rgb(143, 147, 204);
+    font-weight: bold;
+    position: absolute;
+    top: -120px;
+    height: 120px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    user-select: none;
+}
+
+.bombCircle1 {
+    position: absolute;
+    mix-blend-mode: color-dodge;
+    background-color: white;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: bomb1 1s forwards;
+}
+
+.bombCircle2 {
+    position: absolute;
+    mix-blend-mode: color-burn;
+    background-image: radial-gradient(circle, rgb(238, 226, 59), rgb(230, 37, 11));
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: bomb2 2s ease-in-out forwards;
+}
+
+.bombCircle3 {
+    position: absolute;
+    background-image: radial-gradient(circle, black, black);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: bomb3 3s ease-in-out forwards;
+    animation-delay: 0.05s;
+}
+
+@keyframes bomb1 {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    70% {
+        transform: translate(-50%, -50%) scale(300);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(400);
+        opacity: 0;
+    }
+}
+
+@keyframes bomb2 {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(400);
+        opacity: 0;
+    }
+}
+
+@keyframes bomb3 {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(300);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(200);
+        opacity: 0;
+    }
+}
+
+.victoryOverlay {
+    position: absolute;
+    mix-blend-mode: color;
+    opacity: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 48px;
+    font-weight: bold;
+    color: white;
+    user-select: none;
+    pointer-events: none;
+    z-index: 100;
+    transition: opacity ease-out 1s;
+}
+
+.cardColumnContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: space-between;
+    height: 100%;
+    width: 100%;
+}
+
+.cardColumn {
+    position: relative;
+    color: black;
+    height: 100%;
+    width: 200px;
+    filter: blur(2px);
+}
+
+.cardColumn3dContainer {
+    perspective: 400px;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+
+.cardColumnCard {
+    transform-style: preserve-3d;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 120px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    padding: 0;
+    margin: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid black;
+    background-color: white;
+    font-weight: bold;
+    font-size: 24px;
+    text-align: center;
+    word-break: break-word;
+    overflow: hidden;
+    user-select: none;
+}
