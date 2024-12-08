@@ -4,22 +4,14 @@ const path = require("path");
 const bodyParser = require("body-parser");
 
 const PORT = process.env.PORT || 4000;
+const URL = PORT === 4000 ? "http://localhost:3000" : "https://codenames-2-ee8548c59ac1.herokuapp.com/" + PORT;
 
-if (PORT === 4000) {
-    const io = new Server(4000, {
-        cors: {
-            origin: "http://localhost:3000",
-            methods: ["GET", "POST"]
-        }
-    });
-} else {
-    const io = new Server(PORT, {
-        cors: {
-            origin: "https://codenames-2-ee8548c59ac1.herokuapp.com/" + PORT,
-            methods: ["GET", "POST"]
-        }
-    });
-}
+const io = new Server(PORT, {
+    cors: {
+        origin: URL,
+        methods: ["GET", "POST"]
+    }
+});
 
 const exp = express();
 
