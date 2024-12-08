@@ -3,15 +3,25 @@ const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
 
-const io = new Server(4000, {
-    cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"]
-    }
-});
+const PORT = process.env.PORT || 4000;
+
+if (PORT === 4000) {
+    const io = new Server(4000, {
+        cors: {
+            origin: "http://localhost:3000",
+            methods: ["GET", "POST"]
+        }
+    });
+} else {
+    const io = new Server(PORT, {
+        cors: {
+            origin: "https://codenames-2-ee8548c59ac1.herokuapp.com/" + PORT,
+            methods: ["GET", "POST"]
+        }
+    });
+}
 
 const exp = express();
-const PORT = process.env.PORT || 3001;
 
 exp.use(bodyParser.urlencoded({ extended: false }));
 exp.use(bodyParser.json({limit: '50mb'}));
