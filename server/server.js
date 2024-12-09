@@ -2,18 +2,23 @@ const { Server } = require("socket.io");
 const express = require("express");
 const path = require("path");
 const bodyParser = require("body-parser");
+const cors = require("cors");
 
-const PORT = process.env.PORT || 3001;
-const URL = PORT === 3001 ? "http://localhost:3000" : "https://codenames-2-ee8548c59ac1.herokuapp.com/" + PORT;
+const PORT = process.env.PORT || 4000;
+//const URL = PORT === 4000 ? "http://localhost:3000" : "https://codenames-2-ee8548c59ac1.herokuapp.com/" + PORT;
 
-const io = new Server(4000, {
+const exp = express();
+exp.use(cors());
+const httpServer = exp.listen(PORT, () => {
+    console.log(`Server listening on ${PORT}`);
+});
+
+const io = new Server(httpServer/*, {
     cors: {
         origin: URL,
         methods: ["GET", "POST"]
     }
-});
-
-const exp = express();
+}*/);
 
 exp.use(bodyParser.urlencoded({ extended: false }));
 exp.use(bodyParser.json({limit: '50mb'}));
@@ -21,10 +26,6 @@ exp.use(express.static(path.resolve(__dirname, '../client/build')));
 
 exp.get('/', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
-});
-
-exp.listen(PORT, () => {
-    console.log(`Server listening on ${PORT}`);
 });
 
 var users = {};
