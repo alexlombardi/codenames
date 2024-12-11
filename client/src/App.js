@@ -19,7 +19,7 @@ function mod(n, m) {
 }
 
 function App() {
-    const debug = 1;
+    const debug = 0;
     const colorScale = chroma.scale(['rgb(255, 0, 0)', 'rgb(0, 0, 255)']);
     const [targetPrimary, setTargetPrimary] = useState(colorScale(0.5).hex());
     const [interfaceScale, setInterfaceScale] = useState(1);
