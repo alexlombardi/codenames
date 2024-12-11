@@ -200,6 +200,12 @@ function App() {
             setTeams(data);
         });
 
+        //set up receiving combo teams and players from server
+        socket.on('teamsAndPlayers', (data) => {
+            setPlayers(data.players);
+            setTeams(data.teams);
+        });
+
         //set up receiving game start from server
         socket.on('startGame', (data) => {
             setStarted(data);
@@ -854,6 +860,7 @@ function App() {
                                     {team.name}
                                     {team.players.map((player, j) => {
                                         var isSpymaster = j === 0;
+                                        if (typeof players[player] === 'undefined') { return null };
 
                                         return (
                                             <div className='player' key={'player-' + i + '-' + j} style={{ 

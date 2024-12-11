@@ -133,7 +133,7 @@ io.on("connection", (socket) => {
         console.log(rooms);
         //JOIN EXISTING ROOM
         if (rooms.hasOwnProperty(data.room)) {
-            socket.emit('roomJoined', data.room);
+            //socket.emit('roomJoined', data.room);
         //CREATE NEW ROOM
         } else {
             rooms[data.room] = {
@@ -218,10 +218,8 @@ io.on("connection", (socket) => {
         socket.emit('flipCount', rooms[data.room].flipCount);
         //send winner to new client
         socket.emit('winner', rooms[data.room].winner);
-        //send teams when client joins
-        io.in(data.room).emit('teams', rooms[data.room].teams);
-        //send players when client joins
-        io.in(data.room).emit('players', rooms[data.room].players);
+        //send teams and players to everyone when client joins
+        io.in(data.room).emit('teamsAndPlayers', {teams: rooms[data.room].teams, players: rooms[data.room].players});
     });
 
     //receive card change from client
