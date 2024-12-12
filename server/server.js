@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 
 const PORT = process.env.PORT || 4000;
-//const URL = PORT === 4000 ? "http://localhost:3000" : "https://codenames-2-ee8548c59ac1.herokuapp.com/" + PORT;
+const URL = PORT === 4000 ? "http://localhost:3000" : "https://codenames-2-ee8548c59ac1.herokuapp.com/" + PORT;
 
 const exp = express();
 exp.use(cors());
@@ -13,12 +13,12 @@ const httpServer = exp.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
 });
 
-const io = new Server(httpServer/*, {
+const io = new Server(httpServer, {
     cors: {
         origin: URL,
         methods: ["GET", "POST"]
     }
-}*/);
+});
 
 exp.use(bodyParser.urlencoded({ extended: false }));
 exp.use(bodyParser.json({limit: '50mb'}));

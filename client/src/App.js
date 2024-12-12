@@ -178,7 +178,7 @@ function App() {
                     })
                 }
                 setTargetPrimary(newPrimaryColor);
-                setColorAnimationTimestamp(Date.now());
+                setColorAnimationTimestamp(performance.now());
                 const root = document.querySelector('#root');
                 root.style.setProperty('--primary-color', colorScale(scaleBalance).hex());
                 return [...cards]
@@ -227,7 +227,7 @@ function App() {
             setCards(cards => {
                 if (data !== '' && cards.find(card => card.type === 'bomb' && card.flipped)) {
                     setTargetPrimary(data === 'red' ? 'rgb(255, 0, 0)' : 'rgb(0, 0, 255)');
-                    setColorAnimationTimestamp(Date.now());
+                    setColorAnimationTimestamp(performance.now());
                     var overlay = document.getElementsByClassName('victoryOverlay')[0];
                     overlay.style.backgroundColor = data === 'red' ? 'rgb(255, 0, 0)' : 'rgb(0, 0, 255)';
                     overlay.style.opacity = 1;
@@ -239,7 +239,7 @@ function App() {
         socket.on('reset', (data) => {
             const colorScale = chroma.scale(['rgb(255, 0, 0)', 'rgb(0, 0, 255)']);
             setTargetPrimary(colorScale(0.5).hex());
-            setColorAnimationTimestamp(Date.now());
+            setColorAnimationTimestamp(performance.now());
             const root = document.querySelector('#root');
             root.style.setProperty('--primary-color', colorScale(0.5).hex());
             var overlay = document.getElementsByClassName('victoryOverlay')[0];
@@ -854,6 +854,7 @@ function App() {
                         {teams.map((team, i) => {
                             return (
                                 <div className='teamContainer' key={'team-' + i} style={{ borderColor: team.color, color: team.color }} onClick={(event) => {
+                                    if (started) { return };
                                     socket.emit('switchTeam', {room: room, destinationTeam: team.color, sourceTeam: players[socket.id].team});
                                     event.stopPropagation();
                                 }}>
@@ -910,7 +911,8 @@ function App() {
                         </div>
                         <input className='promptInput meterInput' type='text' placeholder='Submit prompts' maxLength={110} onKeyDown={(event) => { promptSubmit(event) }} onClick={(event) => {event.stopPropagation()}} onInput={(event) => {
                             var percent = 50 + (event.target.value.length / 110) * 50;
-                            document.querySelector('.meterInput').style.backgroundImage = `linear-gradient(90deg, lightblue ${percent}%, transparent ${percent}%)`
+                            var meterColor = themeColor(60, 80);
+                            document.querySelector('.meterInput').style.backgroundImage = `linear-gradient(90deg, ${meterColor} ${percent}%, transparent ${percent}%)`
                         }} /></>)}
                     </div>
                 </div>
