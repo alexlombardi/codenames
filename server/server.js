@@ -145,6 +145,7 @@ io.on("connection", (socket) => {
                 clueNumber: 0,
                 flipCount: 0,
                 winner: '',
+                activePowers: [],
                 teams: [
                     {
                         color: 'red',

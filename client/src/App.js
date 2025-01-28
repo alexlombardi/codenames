@@ -19,7 +19,7 @@ function mod(n, m) {
 }
 
 function App() {
-    const debug = 0;
+    const debug = 1;
     const colorScale = chroma.scale(['rgb(255, 0, 0)', 'rgb(0, 0, 255)']);
     const [targetPrimary, setTargetPrimary] = useState(colorScale(0.5).hex());
     const [interfaceScale, setInterfaceScale] = useState(1);
@@ -152,11 +152,8 @@ function App() {
                 //flip card
                 cards[data.index].flipped = data.value;
                 //update primary color
-                //var totalBlue = cards.filter(card => card.type === 'blue').length;
-                //var totalRed = cards.filter(card => card.type === 'red').length;
                 var redFlipped = cards.filter(card => card.type === 'red' && !card.flipped).length;
                 var blueFlipped = cards.filter(card => card.type === 'blue' && !card.flipped).length;
-                //var scaleBalance = 0.5 - ((redFlipped / totalRed) / 2) + ((blueFlipped / totalBlue) / 2);
                 var scaleBalance = 0.5 - Math.min(3, Math.max(-3, redFlipped - blueFlipped)) / 6;
                 var newPrimaryColor = colorScale(scaleBalance).hex();
                 //bomb
@@ -183,6 +180,9 @@ function App() {
                 root.style.setProperty('--primary-color', colorScale(scaleBalance).hex());
                 return [...cards]
             });
+            var cardElements = document.getElementsByClassName('card');
+            var cardElement = cardElements[data.index];
+            unflipCard(cardElement, data.index);
         });
 
         //set up receiving players from server
@@ -590,18 +590,15 @@ function App() {
     }
 
     function cardClick(event, i) {
+        //filter
         if (!started) { return };
         if (turn !== players[socket.id].team && !debug) { return }; //not your turn
         if (teams.some(team => team.players[0] === socket.id) && !debug) { return }; //spymasters can't click
         if (cards.some(card => card.type === 'bomb' && !card.flipped)) { return }; //bomb has been flipped
         if (winner !== '') { return }; //game has ended
-        if (cards[i].flipped === false) {
-            /*flipCard(event.currentTarget, i);
-            cards[i].flipped = true;
-            socket.emit('cardFlip', { index: i, value: true, room: room });*/
-        } else {
-            unflipCard(event.currentTarget, i);
-            cards[i].flipped = false;
+        //emit
+        if (cards[i].flipped === true) {
+            //cards[i].flipped = false;
             socket.emit('cardFlip', { index: i, value: false, room: room });
         }
     }
