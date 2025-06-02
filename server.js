@@ -6,8 +6,6 @@ const cors = require("cors");
 const OpenAI = require('openai');
 require('dotenv').config();
 
-//
-
 const openai = new OpenAI({
     organization: "org-NxH6aWYpUPCLBwO6Obawlfgz",
     apiKey: process.env.OPENAI_API_KEY
@@ -31,10 +29,10 @@ const io = new Server(httpServer, {
 
 exp.use(bodyParser.urlencoded({ extended: false }));
 exp.use(bodyParser.json({limit: '50mb'}));
-exp.use(express.static(path.resolve(__dirname, '../client/build')));
+exp.use(express.static(path.resolve(__dirname, './client/build')));
 
 exp.get('/', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
+    res.sendFile(path.resolve(__dirname, './client/build', 'index.html'));
 });
 
 var users = {};
