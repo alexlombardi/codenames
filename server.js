@@ -324,6 +324,10 @@ io.on("connection", (socket) => {
         io.in(data.room).emit('mouseClick', data);
     });
 
+    socket.on('clickRipple', (data) => {
+        io.in(data.room).emit('clickRipple', data);
+    });
+
     //receive start game from client
     socket.on('startGame', (data) => {
         for (card of rooms[data.room].cards) {

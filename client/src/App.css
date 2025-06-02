@@ -300,10 +300,9 @@
     transform: translate(-50%, -50%);
     border: 2px dashed;
     pointer-events: none;
-    opacity: 0.5;
-    animation: rotateCursor 2s linear infinite;
     transition: width 4s ease-in-out, height 4s ease-in-out;
     z-index: 1000;
+    overflow: hidden;
 }
 
 @keyframes rotateCursor {
@@ -662,6 +661,14 @@
     user-select: none;
 }
 
+.instructionalText {
+    font-weight: bold;
+    color: white;
+    font-style: italic;
+    margin-bottom: 6px;
+    user-select: none;
+}
+
 .powerContainer {
     position: absolute;
     left: -200px;
@@ -670,9 +677,6 @@
     flex-direction: column;
     align-items: center;
     height: 100%;
-    font-weight: bold;
-    color: white;
-    font-style: italic;
 }
 
 .power {
@@ -763,7 +767,8 @@
     font-weight: normal;
     width: 150px;
     text-align: right;
-    z-index: -10;
+    color: white;
+    user-select: none;
 }
 
 .powerHeading {
@@ -775,7 +780,7 @@
 .suggestionLoading {
     position: absolute;
     left: 50%;
-    top: 50%;
+    top: 60%;
     transform: translate(-50%, -50%);
 }
 
@@ -790,7 +795,11 @@
 }
 
 .mark {
-    width: 20px;
-    height: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
     position: absolute;
+    top: 0;
+    left: 0;
 }

@@ -299,6 +299,25 @@ function App() {
             //set up receiving mouse click from server
             socket.on('mouseClick', (data) => {
                 setInterfaceScale(scale => {
+                    var elements = document.getElementsByClassName('gameScreen');
+                    if (elements.length === 0) { return };
+                    var screen = elements[0].getBoundingClientRect();
+                    //click circle
+                    var clickCircle = document.createElement('div');
+                    clickCircle.className = 'clickCircle';
+                    clickCircle.style.left = `${(data.x * scale) + screen.left}px`;
+                    clickCircle.style.top = `${(data.y * scale) + screen.top}px`;
+                    clickCircle.style.backgroundColor = data.color;
+                    document.getElementsByClassName('App')[0].appendChild(clickCircle);
+                    setTimeout(() => {
+                        clickCircle.remove();
+                    }, 500);
+                    return scale;
+                })
+            });
+
+            socket.on('clickRipple', (data) => {
+                setInterfaceScale(scale => {
                     //click ripple
                     var elements = document.getElementsByClassName('cardContainer');
                     if (elements.length === 0) { return };
@@ -324,19 +343,9 @@ function App() {
                             }
                         }
                     }
-                    //click circle
-                    var clickCircle = document.createElement('div');
-                    clickCircle.className = 'clickCircle';
-                    clickCircle.style.left = `${(data.x * scale) + screen.left}px`;
-                    clickCircle.style.top = `${(data.y * scale) + screen.top}px`;
-                    clickCircle.style.backgroundColor = data.color;
-                    document.getElementsByClassName('App')[0].appendChild(clickCircle);
-                    setTimeout(() => {
-                        clickCircle.remove();
-                    }, 500);
                     return scale;
                 })
-            });
+            })
 
             //animation
             let lastTime = 0;
@@ -668,8 +677,12 @@ function App() {
         if (winner !== '') { return }; //game has ended
         //emit
         if (cards[i].flipped === true) {
-            //cards[i].flipped = false;
+            var elements = document.getElementsByClassName('gameScreen');
+            if (elements.length === 0) { return };
+            var screen = elements[0].getBoundingClientRect();
+
             socket.emit('cardFlip', { index: i, value: false, room: room });
+            socket.emit('clickRipple', { x: (event.clientX - screen.left) / interfaceScale, y: (event.clientY - screen.top) / interfaceScale, color: players[socket.id].team, room: room });
         }
     }
 
@@ -902,9 +915,9 @@ function App() {
                                         </ReactFitty>
                                     </div> : null}
                                     <div className='cardBack' style={backStyle}>
-                                        <div className='spymasterMark' style={{display: teams.some(team => team.players[0] === socket.id) && started && cards[i].type !== 'neutral' && cards[i].flipped ? 'flex' : 'none', color: cards[i].type === 'bomb' ? 'black' : (cards[i].type === 'neutral' ? 'white' : cards[i].type), borderBottom: '8px solid ' + (cards[i].type === 'bomb' ? 'black' : (cards[i].type === 'neutral' ? 'white' : cards[i].type))}}>
+                                        {/*<div className='spymasterMark' style={{display: teams.some(team => team.players[0] === socket.id) && started && cards[i].type !== 'neutral' && cards[i].flipped ? 'flex' : 'none', color: cards[i].type === 'bomb' ? 'black' : (cards[i].type === 'neutral' ? 'white' : cards[i].type), borderBottom: '8px solid ' + (cards[i].type === 'bomb' ? 'black' : (cards[i].type === 'neutral' ? 'white' : cards[i].type))}}>
                                             <Icon path={cards[i].type !== 'bomb' ? mdiCrownCircleOutline : mdiBomb} size={1.4} />
-                                        </div>
+                                        </div>*/}
                                         <ReactFitty wrapText={true}>
                                             {started ? card.text.toUpperCase() : null}
                                         </ReactFitty>
@@ -916,6 +929,7 @@ function App() {
 
                     {/*players*/}
                     <div className='playerContainer'>
+                        {started ? null : <div className='instructionalText'>Choose teams:</div>}
                         {teams.map((team, i) => {
                             return (
                                 <div className='teamContainer' key={'team-' + i} style={{ borderColor: team.color, color: team.color }} onClick={(event) => {
@@ -954,7 +968,7 @@ function App() {
 
                     {/*powers*/}
                     <div className='powerContainer'>
-                        {started ? '' : 'Choose powers:'}
+                        {started ? null : <div className='instructionalText'>Choose powers:</div>}
                         {Object.values(powers).map((power, i) => {
                             return <div className='power' style={{backgroundColor: power.color, borderColor: chroma(power.color).darken(2).hex()}} onClick={() => {socket.emit('power', {power: power.name, room: room})}}>
                                 <Icon path={power.icon} size={3.5} color={chroma(power.color).darken(2).hex()} />
@@ -1019,9 +1033,18 @@ function App() {
                     var screen = elements[0].getBoundingClientRect();
                     //if (player.id === socket.id) { return null };
                     if (teams.some(team => team.players[0] === player.id) && started && !debug) { 
-                        return <div className='spymasterCursor' key={'cursor-' + i} style={{ left: ((player.x)), top: ((player.y)), borderColor: player.team, width: spymasterCursorSizeTarget, height: spymasterCursorSizeTarget}}>
+                        return <div className='spymasterCursor' id={'cursor-' + i} key={'cursor-' + i} style={{ left: ((player.x)), top: ((player.y)), borderColor: player.team, width: spymasterCursorSizeTarget, height: spymasterCursorSizeTarget}}>
                             {cards.map((card, j) => {
-                                return <div className='mark' style={{backgroundColor: card.type === 'red' ? 'red' : (card.type === 'blue' ? 'blue' : (card.type === 'neutral' ? 'white' : 'black')), left: j * 200 + 'px'}}>
+                                var cardContainer = document.getElementsByClassName('cardContainer')[0].getBoundingClientRect();
+                                const cursorElement = document.getElementById('cursor-' + i);
+                                if (!cursorElement) { return null };
+                                var w = 225;
+                                var h = 145;
+                                var x = (j * w) - player.x + cardContainer.left  + cursorElement.offsetWidth / 2 - Math.floor(j / 5) * (w * 5) - (w / 2);
+                                var y = - player.y + cursorElement.offsetHeight / 2 + cardContainer.top + Math.floor(j / 5) * h + (h / 2);
+
+                                if (card.type === 'neutral') { return null };
+                                return <div className='mark' style={{backgroundColor: card.type === 'red' ? 'red' : (card.type === 'blue' ? 'blue' : (card.type === 'neutral' ? 'white' : 'black')), left: x + 'px', top: y + 'px'}}>
 
                                 </div>
                             })}
