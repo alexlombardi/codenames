@@ -6,7 +6,7 @@ import { ReactFitty } from 'react-fitty';
 import { socket } from './socket';
 import chroma, { scale } from 'chroma-js';
 import Icon from '@mdi/react';
-import { mdiBomb, mdiCrownCircleOutline, mdiStar } from '@mdi/js';
+import { mdiBomb, mdiCancel, mdiCrownCircleOutline, mdiLightningBolt, mdiLoading, mdiMagnify, mdiRedo, mdiShield, mdiStar, mdiSwapHorizontal } from '@mdi/js';
 
 const defaultStrings = [
     'apple', 'berry', 'charm', 'delta', 'eagle', 'flame', 'grape', 'honey', 'ivory', 'jolly', 'karma', 'lemon', 'mango', 'noble', 'olive', 'pearl', 'quilt', 'raven', 'sugar', 'tiger', 'ultra', 'vivid', 'whale', 'xenon', 'yacht'
@@ -16,6 +16,37 @@ var animations = [...Array(25)].map(() => { return {} });
            
 function mod(n, m) {
     return ((n % m) + m) % m;
+}
+
+const powers = {
+    'swap': {
+        name: 'Swap',
+        description: 'Swap two cards',
+        color: 'rgb(255, 0, 255)',
+        icon: mdiSwapHorizontal,
+        userType: 'spymaster',
+    },
+    'veto': {
+        name: 'Veto',
+        description: 'Remove a card from the game',
+        color: 'rgb(255, 255, 0)',
+        icon: mdiCancel,
+        userType: 'spymaster',
+    },
+    'double': {
+        name: 'Double',
+        description: 'Double the number of cards you can flip this turn',
+        color: 'rgb(0, 255, 0)',
+        icon: mdiLightningBolt,
+        userType: 'user',
+    },
+    'shield': {
+        name: 'Shield',
+        description: 'Protect a card from being flipped',
+        color: 'rgb(0, 255, 255)',
+        icon: mdiShield,
+        userType: 'user',
+    }
 }
 
 function App() {
@@ -37,6 +68,8 @@ function App() {
     const [clueNumber, setClueNumber] = useState(0);
     const [flipCount, setFlipCount] = useState(0);
     const [winner, setWinner] = useState('');
+    const [waitingForSuggestion, setWaitingForSuggestion] = useState(false);
+    const [spymasterCursorSizeTarget, setSpymasterCursorSizeTarget] = useState(16);
     var cardH = 150;
     var columnCount = Math.ceil(window.innerHeight / cardH) + 1;
     cardH = window.innerHeight / columnCount;
@@ -76,6 +109,15 @@ function App() {
 
     //at start
     useEffect(() => {
+        //spymaster cursor
+        window.addEventListener('mousedown', (event) => {
+            setSpymasterCursorSizeTarget(1200);
+        });
+
+        window.addEventListener('mouseup', (event) => {
+            setSpymasterCursorSizeTarget(16);
+        });
+
         //resize card container
         function scaleInterface() {
             var elements = document.getElementsByClassName('gameScreen');
@@ -252,6 +294,8 @@ function App() {
             scaleInterface();
             setRoom(data);
 
+            document.querySelector('#root').style.cursor = 'none';
+
             //set up receiving mouse click from server
             socket.on('mouseClick', (data) => {
                 setInterfaceScale(scale => {
@@ -308,7 +352,7 @@ function App() {
                     const cardCenterX = cardRect.left + (cardRect.width / 2);
                     const cardCenterY = cardRect.top + (cardRect.height / 2);
                     //wobble
-                    const wobbleY = (Math.sin(time / 240 + (i * 1.5)) * 10).toFixed(2);
+                    const wobbleY = (Math.sin(time / 240 + (i * 1.5)) * 9).toFixed(2);
 
                     //click ripple
                     let clickRippleX = 0;
@@ -358,7 +402,6 @@ function App() {
 
                 //animate color change
                     setColorAnimationTimestamp(colorAnimationTimestamp => {
-                        console.log(time - colorAnimationTimestamp)
                         if (time - colorAnimationTimestamp <= 3000) {
                             setTargetPrimary(targetPrimary => {
                                 setPrimaryColor(primaryColor => {
@@ -376,6 +419,17 @@ function App() {
             }
 
             requestAnimationFrame(animate);
+        });
+
+        socket.on('suggest', (data) => {
+            var element = document.querySelector('.meterInput');
+            if (element) {
+                element.value = data.toLowerCase();
+            }
+            var percent = 50 + (data.length / 110) * 50;
+            var meterColor = themeColor(60, 80);
+            element.style.backgroundImage = `linear-gradient(90deg, ${meterColor} ${percent}%, transparent ${percent}%)`
+            setWaitingForSuggestion(false);
         });
     }, []);
 
@@ -562,31 +616,47 @@ function App() {
     }
 
     function gameStateText() {
+        var color = themeColor(37, 68);
+        var text = '';
+        var animation = '';
+
         if (cards.length > 0) {
-            if (winner !== '') { return winner.toUpperCase() + ' WINS' };
+            if (winner !== '') { text = winner.toUpperCase() + ' WINS' };
             if (cards.every(card => card.text !== '')) {
                 //if all cards are filled
                 if (started) {
                     if (turn === 'blue') {
                         if (clue === '') {
-                            return 'Blue spymaster: submit a clue';
+                            color = 'blue';
+                            text = 'Blue spymaster: submit a clue';
                         } else {
-                            return 'Blue: the clue is ' + clue.toUpperCase() + (clueNumber !== 0 ? ' (' + (clueNumber + 1 - flipCount) + ' left)' : '');
+                            color = 'blue';
+                            text = 'Blue: the clue is ' + clue.toUpperCase() + (clueNumber !== 0 ? ' (' + (clueNumber + 1 - flipCount) + ' left)' : '');
                         }
                     } else {
                         if (clue === '') {
-                            return 'Red spymaster: submit a clue';
+                            color = 'red';
+                            text = 'Red spymaster: submit a clue';
                         } else {
-                            return 'Red: the clue is ' + clue.toUpperCase() + (clueNumber !== 0 ? ' (' + (clueNumber + 1 - flipCount) + ' left)' : '');
+                            color = 'red';
+                            text = 'Red: the clue is ' + clue.toUpperCase() + (clueNumber !== 0 ? ' (' + (clueNumber + 1 - flipCount) + ' left)' : '');
                         }
                     }
                 } else {
-                    return 'Ready to start. Pick your teams';
+                    text = 'Ready to start. Pick your teams';
                 }
             } else {
-                return 'Fill in all the cards';
+                text = 'Fill in all the cards';
             }
         }
+
+        if (turn === players[socket.id]?.team && started && ((clue === '' && teams.some(team => team.players[0] === socket.id))) || (clue !== '' && !teams.some(team => team.players[0] === socket.id))) {
+            animation = 'gameStateWobble 1.0s infinite';
+        }
+        
+        return <div className='gameStateContainer' style={{color: color, animation: animation, textShadow: `0 4px ${chroma(color).darken(2).hex()}, 1px 5px white, -1px 5px white, 1px 0 white, -1px 0 white, 0 -1px white`}}>
+            <ReactFitty>{text}</ReactFitty>
+        </div>
     }
 
     function cardClick(event, i) {
@@ -794,9 +864,7 @@ function App() {
                 </div>*/}
 
                 <div className='cardContainer'>
-                    <div className='gameStateContainer' style={{color: themeColor(37, 68)}}>
-                        <ReactFitty>{gameStateText()}</ReactFitty>
-                    </div>
+                    {gameStateText()}
 
                     {cards.map((card, i) => {
                         var outerStyle = {};
@@ -834,8 +902,8 @@ function App() {
                                         </ReactFitty>
                                     </div> : null}
                                     <div className='cardBack' style={backStyle}>
-                                        <div className='spymasterMark' style={{display: teams.some(team => team.players[0] === socket.id) && started && cards[i].type !== 'neutral' && cards[i].flipped ? 'flex' : 'none', color: cards[i].type === 'bomb' ? 'black' : (cards[i].type === 'neutral' ? 'white' : cards[i].type)}}>
-                                            <Icon path={cards[i].type !== 'bomb' ? mdiCrownCircleOutline : mdiBomb} size={5} />
+                                        <div className='spymasterMark' style={{display: teams.some(team => team.players[0] === socket.id) && started && cards[i].type !== 'neutral' && cards[i].flipped ? 'flex' : 'none', color: cards[i].type === 'bomb' ? 'black' : (cards[i].type === 'neutral' ? 'white' : cards[i].type), borderBottom: '8px solid ' + (cards[i].type === 'bomb' ? 'black' : (cards[i].type === 'neutral' ? 'white' : cards[i].type))}}>
+                                            <Icon path={cards[i].type !== 'bomb' ? mdiCrownCircleOutline : mdiBomb} size={1.4} />
                                         </div>
                                         <ReactFitty wrapText={true}>
                                             {started ? card.text.toUpperCase() : null}
@@ -884,6 +952,23 @@ function App() {
                         </div> : null}
                     </div>
 
+                    {/*powers*/}
+                    <div className='powerContainer'>
+                        {started ? '' : 'Choose powers:'}
+                        {Object.values(powers).map((power, i) => {
+                            return <div className='power' style={{backgroundColor: power.color, borderColor: chroma(power.color).darken(2).hex()}} onClick={() => {socket.emit('power', {power: power.name, room: room})}}>
+                                <Icon path={power.icon} size={3.5} color={chroma(power.color).darken(2).hex()} />
+                                <div className='powerGlow' style={{backgroundColor: power.color}}></div>
+                                <div className='powerTextContainer'>
+                                    <div className='powerText'>
+                                        <div className='powerHeading' style={{color: power.color}}>{power.name.toUpperCase()}</div>
+                                        {power.description}
+                                    </div>
+                                </div>
+                            </div>
+                        })}
+                    </div>
+
                     {/*controls*/}
                     <div className='controlsContainer'>
                         {started ? <>
@@ -906,6 +991,16 @@ function App() {
                             <div className='buttonHoverCircle'></div>
                             Fill all
                         </div>
+                        <div className='button' style={{minWidth: '140px', minHeight: '55px'}} onClick={() => {
+                            if (waitingForSuggestion) { return };
+                            socket.emit('suggest', {}); 
+                            setWaitingForSuggestion(true);
+                        }} onMouseEnter={(event) => {buttonHover(event)}} onMouseLeave={(event) => {buttonUnhover(event)}}>
+                            <div className='buttonHoverCircle'></div>
+                            {waitingForSuggestion ? <div className='suggestionLoading'>
+                                <Icon path={mdiLoading} spin={2} size={2.0} />
+                            </div> : 'Suggest'}
+                        </div>
                         <input className='promptInput meterInput' type='text' placeholder='Submit prompts' maxLength={110} onKeyDown={(event) => { promptSubmit(event) }} onClick={(event) => {event.stopPropagation()}} onInput={(event) => {
                             var percent = 50 + (event.target.value.length / 110) * 50;
                             var meterColor = themeColor(60, 80);
@@ -923,10 +1018,17 @@ function App() {
                     if (elements.length === 0) { return };
                     var screen = elements[0].getBoundingClientRect();
                     //if (player.id === socket.id) { return null };
-                    if (teams.some(team => team.players[0] === player.id) && started && !debug) { return null }; //spymasters don't get cursors
-                    return (
-                        <div className='cursor' key={'cursor-' + i} style={{ left: ((player.x)), top: ((player.y)), backgroundColor: player.team }}></div>
-                    );
+                    if (teams.some(team => team.players[0] === player.id) && started && !debug) { 
+                        return <div className='spymasterCursor' key={'cursor-' + i} style={{ left: ((player.x)), top: ((player.y)), borderColor: player.team, width: spymasterCursorSizeTarget, height: spymasterCursorSizeTarget}}>
+                            {cards.map((card, j) => {
+                                return <div className='mark' style={{backgroundColor: card.type === 'red' ? 'red' : (card.type === 'blue' ? 'blue' : (card.type === 'neutral' ? 'white' : 'black')), left: j * 200 + 'px'}}>
+
+                                </div>
+                            })}
+                        </div>
+                    };
+                    //standard cursor
+                    return <div className='cursor' key={'cursor-' + i} style={{ left: ((player.x)), top: ((player.y)), backgroundColor: player.team }}></div>
                 })}
             </div>
             <div className='victoryOverlay'></div>
