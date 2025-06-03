@@ -18,35 +18,58 @@ function mod(n, m) {
     return ((n % m) + m) % m;
 }
 
-const powers = {
-    'swap': {
+const defaultPowers = {
+    'Swap': {
         name: 'Swap',
-        description: 'Swap two cards',
+        description: 'Swap the text on two cards, keeping their colors in place',
         color: 'rgb(255, 0, 255)',
-        icon: mdiSwapHorizontal,
         userType: 'spymaster',
+        enabled: true,
+        heldBy: '',
+        usedBy: [],
+        maxCards: 2,
+        selectedCards: []
     },
-    'veto': {
+    'Veto': {
         name: 'Veto',
-        description: 'Remove a card from the game',
+        description: 'Reject a card and replace it with a new one',
         color: 'rgb(255, 255, 0)',
-        icon: mdiCancel,
         userType: 'spymaster',
+        enabled: true,
+        heldBy: '',
+        usedBy: [],
+        maxCards: 1,
+        selectedCards: []
     },
-    'double': {
-        name: 'Double',
-        description: 'Double the number of cards you can flip this turn',
+    'Second Guess': {
+        name: 'Second Guess',
+        description: 'Guess two cards simultaneously - if either is correct, you flip one',
         color: 'rgb(0, 255, 0)',
-        icon: mdiLightningBolt,
-        userType: 'user',
+        userType: 'player',
+        enabled: true,
+        heldBy: '',
+        usedBy: [],
+        maxCards: 2,
+        selectedCards: []
     },
-    'shield': {
+    'Shield': {
         name: 'Shield',
-        description: 'Protect a card from being flipped',
+        description: 'Place a shield on a card that will end a user\'s turn if they attempt to flip it',
         color: 'rgb(0, 255, 255)',
-        icon: mdiShield,
-        userType: 'user',
+        userType: 'player',
+        enabled: true,
+        heldBy: '',
+        usedBy: [],
+        maxCards: 1,
+        selectedCards: []
     }
+}
+
+const powerIcons = {
+    'Swap': mdiSwapHorizontal,
+    'Veto': mdiCancel,
+    'Second Guess': mdiLightningBolt,
+    'Shield': mdiShield
 }
 
 function App() {
@@ -69,7 +92,8 @@ function App() {
     const [flipCount, setFlipCount] = useState(0);
     const [winner, setWinner] = useState('');
     const [waitingForSuggestion, setWaitingForSuggestion] = useState(false);
-    const [spymasterCursorSizeTarget, setSpymasterCursorSizeTarget] = useState(16);
+    const [spymasterCursorSizeTarget, setSpymasterCursorSizeTarget] = useState(24);
+    const [currentPowers, setCurrentPowers] = useState(defaultPowers);
     var cardH = 150;
     var columnCount = Math.ceil(window.innerHeight / cardH) + 1;
     cardH = window.innerHeight / columnCount;
@@ -115,7 +139,7 @@ function App() {
         });
 
         window.addEventListener('mouseup', (event) => {
-            setSpymasterCursorSizeTarget(16);
+            setSpymasterCursorSizeTarget(24);
         });
 
         //resize card container
@@ -440,6 +464,10 @@ function App() {
             element.style.backgroundImage = `linear-gradient(90deg, ${meterColor} ${percent}%, transparent ${percent}%)`
             setWaitingForSuggestion(false);
         });
+
+        socket.on('powers', (data) => {
+            setCurrentPowers(data);
+        })
     }, []);
 
     //apply animations
@@ -660,7 +688,7 @@ function App() {
         }
 
         if (turn === players[socket.id]?.team && started && ((clue === '' && teams.some(team => team.players[0] === socket.id))) || (clue !== '' && !teams.some(team => team.players[0] === socket.id))) {
-            animation = 'gameStateWobble 1.0s infinite';
+            animation = 'gameStateWobble ease-in-out 1.0s infinite';
         }
         
         return <div className='gameStateContainer' style={{color: color, animation: animation, textShadow: `0 4px ${chroma(color).darken(2).hex()}, 1px 5px white, -1px 5px white, 1px 0 white, -1px 0 white, 0 -1px white`}}>
@@ -672,10 +700,27 @@ function App() {
         //filter
         if (!started) { return };
         if (turn !== players[socket.id].team && !debug) { return }; //not your turn
-        if (teams.some(team => team.players[0] === socket.id) && !debug) { return }; //spymasters can't click
         if (cards.some(card => card.type === 'bomb' && !card.flipped)) { return }; //bomb has been flipped
         if (winner !== '') { return }; //game has ended
-        //emit
+        //use power
+        if (Object.values(currentPowers).some(power => power.heldBy === socket.id && power.selectedCards.length < power.maxCards)) {
+            var powerName = Object.values(currentPowers).find(power => power.heldBy === socket.id).name;
+            if (currentPowers[powerName].selectedCards.includes(i)) {
+                //unselect card
+                currentPowers[powerName].selectedCards = currentPowers[powerName].selectedCards.filter(cardIndex => cardIndex !== i);
+            } else {
+                //select card
+                if (currentPowers[powerName].selectedCards.length < currentPowers[powerName].maxCards) {
+                    currentPowers[powerName].selectedCards.push(i);
+                }
+            }
+            socket.emit('powers', { powers: currentPowers, room: room, user: loggedInAs });
+            return
+        }
+
+        if (teams.some(team => team.players[0] === socket.id) && !debug) { return }; //spymasters can't click
+
+        //flip card
         if (cards[i].flipped === true) {
             var elements = document.getElementsByClassName('gameScreen');
             if (elements.length === 0) { return };
@@ -780,10 +825,8 @@ function App() {
     }*/
 
     function buttonHover(event) {
-        console.log('enter')
         const rect = event.currentTarget.getBoundingClientRect();
         const circle = event.currentTarget.querySelector('.buttonHoverCircle');
-        console.log('enter 2')
         if (!circle) { return };
         circle.style.display = 'block'
         circle.style.left = (event.clientX - rect.left) + 'px';
@@ -791,9 +834,7 @@ function App() {
     }
 
     function buttonUnhover(event) {
-        console.log('exit')
         const circle = event.currentTarget.querySelector('.buttonHoverCircle');
-        console.log(circle)
         if (!circle) { return };
         circle.style.display = 'none'
     }
@@ -969,15 +1010,61 @@ function App() {
                     {/*powers*/}
                     <div className='powerContainer'>
                         {started ? null : <div className='instructionalText'>Choose powers:</div>}
-                        {Object.values(powers).map((power, i) => {
-                            return <div className='power' style={{backgroundColor: power.color, borderColor: chroma(power.color).darken(2).hex()}} onClick={() => {socket.emit('power', {power: power.name, room: room})}}>
-                                <Icon path={power.icon} size={3.5} color={chroma(power.color).darken(2).hex()} />
+                        {Object.values(currentPowers).map((power, i) => {
+                            const userIsSpymaster = teams.some(team => team.players[0] === socket.id);
+
+                            function powerClick() {
+                                if (started) {
+                                    if (turn !== players[socket.id].team) {return} //not your turn
+                                    if (power.userType === 'spymaster' && !userIsSpymaster) {return} //not usable by you
+                                    if (power.userType === 'player' && userIsSpymaster) {return} //not usable by you
+                                    if (power.heldBy !== '' && power.heldBy !== socket.id) {return} //held by another player
+                                    if (power.usedBy.includes(players[socket.id].team)) {return} //already used by your team
+                                    power.heldBy = power.heldBy === socket.id ? '' : socket.id; //toggle power
+                                } else {
+                                    if (power.enabled === true) {
+                                        currentPowers[power.name].enabled = false;
+                                    } else {
+                                        currentPowers[power.name].enabled = true;
+                                    }
+                                }
+                                socket.emit('powers', {powers: currentPowers, room: room, user: loggedInAs});
+                            }
+
+                            if (power.enabled === false && started) {
+                                return null; //don't show disabled powers after game has started
+                            }
+
+                            if (power.heldBy !== '') {
+                                return <div className='heldPower' key={'power-' + i} style={{borderColor: chroma(power.color).darken(2).hex()}} onClick={() => {powerClick()}}>
+                                    <Icon path={powerIcons[power.name]} size={3.5} color={chroma(power.color).darken(2).hex()} />
+                                    <div className='powerHoverText'>
+                                        Power in use by {players[power.heldBy].username}
+                                    </div>
+                                </div>
+                            }
+
+                            if (power.enabled === false || (started && (!userIsSpymaster && power.userType === 'spymaster' || userIsSpymaster && power.userType === 'player')) || (started && power.usedBy.includes(players[socket.id].team))) {
+                                return <div className='disabledPower' key={'power-' + i} style={{borderColor: chroma(power.color).darken(2).hex()}} onClick={() => {powerClick()}}>
+                                    <Icon path={powerIcons[power.name]} size={3.5} color={chroma(power.color).darken(2).hex()} />
+                                    <div className='powerHoverText'>
+                                        {started ? 'Not usable by you' : 'Enable'}
+                                    </div>
+                                </div>
+                            }
+
+                            return <div className='power' key={'power-' + i} style={{backgroundColor: power.color, borderColor: chroma(power.color).darken(2).hex()}} onClick={() => {powerClick()}}>
+                                <Icon path={powerIcons[power.name]} size={3.5} color={chroma(power.color).darken(2).hex()} />
                                 <div className='powerGlow' style={{backgroundColor: power.color}}></div>
                                 <div className='powerTextContainer'>
                                     <div className='powerText'>
                                         <div className='powerHeading' style={{color: power.color}}>{power.name.toUpperCase()}</div>
-                                        {power.description}
+                                        {power.description}<br />
+                                        <i style={{fontSize: '8px', lineHeight: '4px'}}>{power.userType === 'spymaster' ? 'Usable by spymasters' : 'Usable by non-spymasters'}</i>
                                     </div>
+                                </div>
+                                <div className='powerHoverText'>
+                                    {started ? 'Activate' : 'Disable'}
                                 </div>
                             </div>
                         })}
@@ -1005,9 +1092,9 @@ function App() {
                             <div className='buttonHoverCircle'></div>
                             Fill all
                         </div>
-                        <div className='button' style={{minWidth: '140px', minHeight: '55px'}} onClick={() => {
+                        <div className='button' style={{minWidth: '140px', minHeight: '62px'}} onClick={() => {
                             if (waitingForSuggestion) { return };
-                            socket.emit('suggest', {}); 
+                            socket.emit('suggest', {room: room}); 
                             setWaitingForSuggestion(true);
                         }} onMouseEnter={(event) => {buttonHover(event)}} onMouseLeave={(event) => {buttonUnhover(event)}}>
                             <div className='buttonHoverCircle'></div>
@@ -1031,7 +1118,18 @@ function App() {
                     elements = document.getElementsByClassName('gameScreen');
                     if (elements.length === 0) { return };
                     var screen = elements[0].getBoundingClientRect();
-                    //if (player.id === socket.id) { return null };
+                    
+                    //power cursor
+                    if (Object.values(currentPowers).some(item => item.heldBy === player.id)) {
+                        const thisPower = Object.values(currentPowers).find(item => item.heldBy === player.id);
+
+                        return <div className='powerCursor' key={'cursor-' + i} style={{ left: ((player.x)), top: ((player.y)), backgroundColor: thisPower.color, borderColor: chroma(thisPower.color).darken(2).hex() }}>
+                            <Icon path={powerIcons[thisPower.name]} size={0.7} color={chroma(thisPower.color).darken(2).hex()} />
+                            <div className='powerCursorGlow' style={{backgroundColor: thisPower.color}}></div>
+                        </div>
+                    };
+
+                    //spymaster cursor
                     if (teams.some(team => team.players[0] === player.id) && started && !debug) { 
                         return <div className='spymasterCursor' id={'cursor-' + i} key={'cursor-' + i} style={{ left: ((player.x)), top: ((player.y)), borderColor: player.team, width: spymasterCursorSizeTarget, height: spymasterCursorSizeTarget}}>
                             {cards.map((card, j) => {
@@ -1044,8 +1142,8 @@ function App() {
                                 var y = - player.y + cursorElement.offsetHeight / 2 + cardContainer.top + Math.floor(j / 5) * h + (h / 2);
 
                                 if (card.type === 'neutral') { return null };
-                                return <div className='mark' style={{backgroundColor: card.type === 'red' ? 'red' : (card.type === 'blue' ? 'blue' : (card.type === 'neutral' ? 'white' : 'black')), left: x + 'px', top: y + 'px'}}>
-
+                                return <div className='mark' style={{backgroundImage: `radial-gradient(circle, transparent 0%, ${card.type === 'red' ? 'red' : card.type === 'blue' ? 'blue' : card.type === 'neutral' ? 'white' : 'black'} 100%)`, left: x + 'px', top: y + 'px', animationDelay: (j * 100) + 'ms'}}>
+                                    {card.type === 'bomb' ? <Icon path={mdiBomb} size={2.5} color='white' /> : null}
                                 </div>
                             })}
                         </div>

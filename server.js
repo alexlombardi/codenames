@@ -39,6 +39,65 @@ var users = {};
 
 var rooms = {};
 
+const defaultPowers = {
+    'Swap': {
+        name: 'Swap',
+        description: 'Swap the text on two cards, keeping their colors in place',
+        color: 'rgb(255, 0, 255)',
+        userType: 'spymaster',
+        enabled: true,
+        heldBy: '',
+        usedBy: [],
+        maxCards: 2,
+        selectedCards: []
+    },
+    'Veto': {
+        name: 'Veto',
+        description: 'Reject a card and replace it with a new one',
+        color: 'rgb(255, 255, 0)',
+        userType: 'spymaster',
+        enabled: true,
+        heldBy: '',
+        usedBy: [],
+        maxCards: 1,
+        selectedCards: []
+    },
+    'Second Guess': {
+        name: 'Second Guess',
+        description: 'Guess two cards simultaneously - if either is correct, you flip one',
+        color: 'rgb(0, 255, 0)',
+        userType: 'player',
+        enabled: true,
+        heldBy: '',
+        usedBy: [],
+        maxCards: 2,
+        selectedCards: []
+    },
+    'Shield': {
+        name: 'Shield',
+        description: 'Place a shield on a card that will end a user\'s turn if they attempt to flip it',
+        color: 'rgb(0, 255, 255)',
+        userType: 'player',
+        enabled: true,
+        heldBy: '',
+        usedBy: [],
+        maxCards: 1,
+        selectedCards: []
+    }
+}
+
+async function getSuggestion() {
+    var response = await openai.responses.create({
+        model: 'ft:gpt-4o-2024-08-06:personal::ArzVIUOX',
+        instructions: 'Follow instructions.',
+        input: [{
+            role: 'user',
+            content: 'Generate a short phrase or word that is not a verb and not a number. Do not use any special characters or punctuation.',
+        }]
+    })
+    return response.output[0].content[0].text;
+}
+
 io.on("connection", (socket) => {
     console.log("a user connected");
     console.log(socket.id);
@@ -64,17 +123,20 @@ io.on("connection", (socket) => {
     });
 
     //prompt suggestion
-    socket.on('suggest', async () => {
-        //create response
-        var response = await openai.responses.create({
-            model: 'ft:gpt-4o-2024-08-06:personal::ArzVIUOX',
-            instructions: 'Follow instructions.',
-            input: [{
-                role: 'user',
-                content: 'Generate a short phrase or word that is not a verb and not a number. Do not use any special characters or punctuation. The phrase should be suitable for a game of codenames.',
-            }]
-        })
-        socket.emit('suggest', response.output[0].content[0].text);
+    socket.on('suggest', async (data) => {
+        const suggestion = rooms[data.room].suggestions.shift()
+        if (!suggestion) {
+            socket.emit('suggest', '');
+        } else {
+            socket.emit('suggest', suggestion);
+        }
+        //restock
+        getSuggestion().then((suggestion) => {
+            rooms[data.room].suggestions.push(suggestion);
+            console.log('New suggestion added: ' + suggestion);
+        }).catch((error) => {
+            console.error('Error fetching suggestion:', error);
+        });
     })
 
     //receive login textbox input from client
@@ -166,7 +228,8 @@ io.on("connection", (socket) => {
                 clueNumber: 0,
                 flipCount: 0,
                 winner: '',
-                activePowers: [],
+                powers: defaultPowers,
+                suggestions: [],
                 teams: [
                     {
                         color: 'red',
@@ -202,6 +265,15 @@ io.on("connection", (socket) => {
             }
             rooms[data.room].cards[12].type = 'bomb';
             rooms[data.room].cards.sort(() => Math.random() - 0.5);
+            //get initial suggestions
+            for (let i = 0; i < 5; i++) {
+                getSuggestion().then((suggestion) => {
+                    rooms[data.room].suggestions.push(suggestion);
+                    console.log('New suggestion added: ' + suggestion);
+                }).catch((error) => {
+                    console.error('Error fetching suggestion:', error);
+                });
+            }
         }
         //add player
         var player = {
@@ -240,6 +312,8 @@ io.on("connection", (socket) => {
         socket.emit('flipCount', rooms[data.room].flipCount);
         //send winner to new client
         socket.emit('winner', rooms[data.room].winner);
+        //send powers to new client
+        socket.emit('powers', rooms[data.room].powers);
         //send teams and players to everyone when client joins
         io.in(data.room).emit('teamsAndPlayers', {teams: rooms[data.room].teams, players: rooms[data.room].players});
     });
@@ -393,6 +467,39 @@ io.on("connection", (socket) => {
             console.log('Room deleted: ' + data.room);
             delete rooms[data.room];
         }
+    });
+
+    //receive power change from client
+    socket.on('powers', (data) => {
+        rooms[data.room].powers = data.powers;
+
+        var thisPlayerPower = Object.values(rooms[data.room].powers).find(power => power.heldBy === socket.id);
+        if (thisPlayerPower) {
+            var thisPowerName = thisPlayerPower.name;
+
+            //if enough cards are selected, use the power
+            if (thisPlayerPower.selectedCards.length >= thisPlayerPower.maxCards) {
+                //actually use the power
+                if (thisPowerName === 'Swap') {
+
+                }
+                if (thisPowerName === 'Veto') {
+
+                }
+                if (thisPowerName === 'Second Guess') {
+                
+                }
+                if (thisPowerName === 'Shield') {
+
+                }
+
+                //set power state
+                rooms[data.room].powers[thisPowerName].selectedCards = [];
+                rooms[data.room].powers[thisPowerName].heldBy = '';
+                rooms[data.room].powers[thisPowerName].usedBy.push(rooms[data.room].players[socket.id].team);
+            }
+        }
+        io.in(data.room).emit('powers', rooms[data.room].powers);
     });
 
     //receive reset from client
