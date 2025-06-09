@@ -86,6 +86,14 @@ const defaultPowers = {
     }
 }
 
+const defaultSettings = [
+    {
+        name: 'Bomb count',
+        options: [1, 2, 3],
+        value: 1
+    }
+]
+
 async function getSuggestion() {
     var response = await openai.responses.create({
         model: 'ft:gpt-4o-2024-08-06:personal::ArzVIUOX',
@@ -229,6 +237,7 @@ io.on("connection", (socket) => {
                 flipCount: 0,
                 winner: '',
                 powers: defaultPowers,
+                settings: defaultSettings,
                 suggestions: [],
                 teams: [
                     {
@@ -407,6 +416,19 @@ io.on("connection", (socket) => {
         for (card of rooms[data.room].cards) {
             card.backColor = null;
         }
+        //add additional bombs
+        var neutralCardIndices = [];
+        var additionalBombs = rooms[data.room].settings[0].value - 1;
+        for (let i = 0; i < additionalBombs; i++) {
+            for (let j = 0; j < rooms[data.room].cards.length; j++) {
+                if (rooms[data.room].cards[j].type === 'neutral') {
+                    neutralCardIndices.push(j);
+                }
+            }
+            var randomNeutralIndex = neutralCardIndices[Math.floor(Math.random() * neutralCardIndices.length)];
+            rooms[data.room].cards[randomNeutralIndex].type = 'bomb';
+        }
+        //emit
         io.in(data.room).emit('cards', rooms[data.room].cards);
         rooms[data.room].started = true;
         io.in(data.room).emit('startGame', true);
@@ -501,6 +523,12 @@ io.on("connection", (socket) => {
         }
         io.in(data.room).emit('powers', rooms[data.room].powers);
     });
+
+    //receive settings
+    socket.on('settings', (data) => {
+        rooms[data.room].settings = data.settings;
+        io.in(data.room).emit('settings', rooms[data.room].settings);
+    })
 
     //receive reset from client
     socket.on('reset', (data) => {

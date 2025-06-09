@@ -72,6 +72,14 @@ const powerIcons = {
     'Shield': mdiShield
 }
 
+const defaultSettings = [
+    {
+        name: 'Bomb count',
+        options: [1, 2, 3],
+        value: 1
+    }
+]
+
 function App() {
     const debug = 0;
     const colorScale = chroma.scale(['rgb(255, 0, 0)', 'rgb(0, 0, 255)']);
@@ -94,6 +102,7 @@ function App() {
     const [waitingForSuggestion, setWaitingForSuggestion] = useState(false);
     const [spymasterCursorSizeTarget, setSpymasterCursorSizeTarget] = useState(24);
     const [currentPowers, setCurrentPowers] = useState(defaultPowers);
+    const [settings, setSettings] = useState(defaultSettings);
     var cardH = 150;
     var columnCount = Math.ceil(window.innerHeight / cardH) + 1;
     cardH = window.innerHeight / columnCount;
@@ -468,6 +477,10 @@ function App() {
         socket.on('powers', (data) => {
             setCurrentPowers(data);
         })
+
+        socket.on('settings', (data) => {
+            setSettings(data);
+        });
     }, []);
 
     //apply animations
@@ -997,6 +1010,24 @@ function App() {
                                 </div>
                             );
                         })}
+                        {started ? null : <div className='instructionalText'>Round settings:</div>}
+                        {settings.map((setting, i) => {
+                            if (started) { return null }; //don't show settings after game has started
+                            return <div className='settingItem'>
+                                <div className='settingName'>{setting.name}</div>
+                                <div className='settingOptions'>
+                                    {setting.options.map((option, j) => {
+                                        return <div className={'settingOption' + (setting.value === option ? ' settingOptionSelected' : '')} key={'setting-' + i + '-' + j} onClick={() => {
+                                            var temp = JSON.parse(JSON.stringify(settings));
+                                            temp[i].value = option;
+                                            socket.emit('settings', { room: room, settings: temp });
+                                        }}>
+                                            {option}
+                                        </div>
+                                    })}
+                                </div>
+                            </div>
+                        })}
                         {started && turn === players[socket.id].team && winner === '' ? <div className='button' onClick={() => {socket.emit('endTurn', {room: room})}} onMouseEnter={(event) => {buttonHover(event)}} onMouseLeave={(event) => {buttonUnhover(event)}}>
                             <div className='buttonHoverCircle'></div>
                             END TURN
@@ -1005,6 +1036,35 @@ function App() {
                             <div className='buttonHoverCircle'></div>
                             NEW GAME
                         </div> : null}
+                        {teams.some(team => team.players[0] === socket.id) && started ? <div className='spymasterColorList'>
+                            <div style={{width: '100%'}}>Spymaster cheat sheet:</div> 
+                            <div className='spymasterColorColumnContainer'>
+                                <div className='spymasterColorColumn'>
+                                    Red:
+                                    {cards.filter(card => card.type === 'red' && card.flipped).map((card, i) => {
+                                        return <div style={{backgroundColor: 'red'}}>{card.text}</div>
+                                    })}
+                                </div>
+                                <div className='spymasterColorColumn'>
+                                    Blue:
+                                    {cards.filter(card => card.type === 'blue' && card.flipped).map((card, i) => {
+                                        return <div style={{backgroundColor: 'blue'}}>{card.text}</div>
+                                    })}
+                                </div>
+                                <div className='spymasterColorColumn'>
+                                    Neutral:
+                                    {cards.filter(card => card.type === 'neutral' && card.flipped).map((card, i) => {
+                                        return <div style={{backgroundColor: 'gray'}}>{card.text}</div>
+                                    })}
+                                </div>
+                                <div className='spymasterColorColumn'>
+                                    Bombs:
+                                    {cards.filter(card => card.type === 'bomb' && card.flipped).map((card, i) => {
+                                        return <div style={{backgroundColor: 'black'}}>{card.text}</div>
+                                    })}
+                                </div>
+                            </div>
+                        </div> : null}
                     </div>
 
                     {/*powers*/}
@@ -1012,10 +1072,11 @@ function App() {
                         {started ? null : <div className='instructionalText'>Choose powers:</div>}
                         {Object.values(currentPowers).map((power, i) => {
                             const userIsSpymaster = teams.some(team => team.players[0] === socket.id);
+                            const usersTurn = players.hasOwnProperty(socket.id) ? (turn === players[socket.id].team) : false;
 
                             function powerClick() {
                                 if (started) {
-                                    if (turn !== players[socket.id].team) {return} //not your turn
+                                    if (!usersTurn) {return} //not your turn
                                     if (power.userType === 'spymaster' && !userIsSpymaster) {return} //not usable by you
                                     if (power.userType === 'player' && userIsSpymaster) {return} //not usable by you
                                     if (power.heldBy !== '' && power.heldBy !== socket.id) {return} //held by another player
@@ -1064,7 +1125,7 @@ function App() {
                                     </div>
                                 </div>
                                 <div className='powerHoverText'>
-                                    {started ? 'Activate' : 'Disable'}
+                                    {started ? (usersTurn ? 'Activate' : 'Not your turn') : 'Disable'}
                                 </div>
                             </div>
                         })}
@@ -1138,8 +1199,8 @@ function App() {
                                 if (!cursorElement) { return null };
                                 var w = 225;
                                 var h = 145;
-                                var x = (j * w) - player.x + cardContainer.left  + cursorElement.offsetWidth / 2 - Math.floor(j / 5) * (w * 5) - (w / 2);
-                                var y = - player.y + cursorElement.offsetHeight / 2 + cardContainer.top + Math.floor(j / 5) * h + (h / 2);
+                                var x = (j * w) - player.x + (interfaceScale * cardContainer.left)  + cursorElement.offsetWidth / 2 - Math.floor(j / 5) * (w * 5) - (w / 2);
+                                var y = - player.y + cursorElement.offsetHeight / 2 + (interfaceScale * cardContainer.top) + Math.floor(j / 5) * h + (h / 2);
 
                                 if (card.type === 'neutral') { return null };
                                 return <div className='mark' style={{backgroundImage: `radial-gradient(circle, transparent 0%, ${card.type === 'red' ? 'red' : card.type === 'blue' ? 'blue' : card.type === 'neutral' ? 'white' : 'black'} 100%)`, left: x + 'px', top: y + 'px', animationDelay: (j * 100) + 'ms'}}>

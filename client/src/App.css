@@ -300,7 +300,7 @@
     transform: translate(-50%, -50%);
     border: 2px dashed;
     pointer-events: none;
-    transition: width 3s ease-in-out, height 3s ease-in-out;
+    transition: width 1.8s ease-in-out, height 1.8s ease-in-out;
     z-index: 1000;
     overflow: hidden;
 }
@@ -944,4 +944,53 @@
         opacity: 1;
         transform: translate(-50%, -50%) scale(1) translate(0px, 0px) rotate(0deg);
     }
+}
+
+.spymasterColorList {
+    font-size: 10px;
+    user-select: none;
+    color: white;
+    text-align: center;
+}
+
+.spymasterColorColumnContainer {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.spymasterColorColumn {
+    width: 50%;
+    text-align: center;
+}
+
+.spymasterColorColumn > div {
+    padding: 1px 4px;
+    border-radius: 5px;
+    margin: 2px;
+    text-align: center;
+}
+
+.settingItem {
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    user-select: none;
+    border-top: 4px solid white;
+    padding: 2px 10px;
+}
+
+.settingOptions {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.settingOption {
+    padding: 0 14px;
+}
+
+.settingOptionSelected {
+    color: var(--primary-color);
+    text-shadow: 1px 1px white, 1px -1px white, -1px 1px white, -1px -1px white;
 }
