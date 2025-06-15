@@ -946,11 +946,25 @@
     }
 }
 
+.spymasterColorListOuter {
+    position: relative;
+    height: 15px;
+    width: 200%;
+}
+
 .spymasterColorList {
+    position: absolute;
     font-size: 10px;
     user-select: none;
     color: white;
     text-align: center;
+    overflow: hidden;
+    height: 15px;
+    transition: height 0.5s ease-in-out;
+}
+
+.spymasterColorList:hover {
+    height: 500px;
 }
 
 .spymasterColorColumnContainer {
@@ -960,7 +974,7 @@
 }
 
 .spymasterColorColumn {
-    width: 50%;
+    width: 25%;
     text-align: center;
 }
 

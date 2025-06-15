@@ -1036,32 +1036,34 @@ function App() {
                             <div className='buttonHoverCircle'></div>
                             NEW GAME
                         </div> : null}
-                        {teams.some(team => team.players[0] === socket.id) && started ? <div className='spymasterColorList'>
-                            <div style={{width: '100%'}}>Spymaster cheat sheet:</div> 
-                            <div className='spymasterColorColumnContainer'>
-                                <div className='spymasterColorColumn'>
-                                    Red:
-                                    {cards.filter(card => card.type === 'red' && card.flipped).map((card, i) => {
-                                        return <div style={{backgroundColor: 'red'}}>{card.text}</div>
-                                    })}
-                                </div>
-                                <div className='spymasterColorColumn'>
-                                    Blue:
-                                    {cards.filter(card => card.type === 'blue' && card.flipped).map((card, i) => {
-                                        return <div style={{backgroundColor: 'blue'}}>{card.text}</div>
-                                    })}
-                                </div>
-                                <div className='spymasterColorColumn'>
-                                    Neutral:
-                                    {cards.filter(card => card.type === 'neutral' && card.flipped).map((card, i) => {
-                                        return <div style={{backgroundColor: 'gray'}}>{card.text}</div>
-                                    })}
-                                </div>
-                                <div className='spymasterColorColumn'>
-                                    Bombs:
-                                    {cards.filter(card => card.type === 'bomb' && card.flipped).map((card, i) => {
-                                        return <div style={{backgroundColor: 'black'}}>{card.text}</div>
-                                    })}
+                        {teams.some(team => team.players[0] === socket.id) && started ? <div className='spymasterColorListOuter'>
+                            <div className='spymasterColorList'>
+                                <div style={{width: '100%'}}>Spymaster cheat sheet:</div> 
+                                <div className='spymasterColorColumnContainer'>
+                                    <div className='spymasterColorColumn'>
+                                        Red:
+                                        {cards.filter(card => card.type === 'red' && card.flipped).map((card, i) => {
+                                            return <div style={{backgroundColor: 'red'}}>{card.text}</div>
+                                        })}
+                                    </div>
+                                    <div className='spymasterColorColumn'>
+                                        Blue:
+                                        {cards.filter(card => card.type === 'blue' && card.flipped).map((card, i) => {
+                                            return <div style={{backgroundColor: 'blue'}}>{card.text}</div>
+                                        })}
+                                    </div>
+                                    <div className='spymasterColorColumn'>
+                                        Neutral:
+                                        {cards.filter(card => card.type === 'neutral' && card.flipped).map((card, i) => {
+                                            return <div style={{backgroundColor: 'gray'}}>{card.text}</div>
+                                        })}
+                                    </div>
+                                    <div className='spymasterColorColumn'>
+                                        Bombs:
+                                        {cards.filter(card => card.type === 'bomb' && card.flipped).map((card, i) => {
+                                            return <div style={{backgroundColor: 'black'}}>{card.text}</div>
+                                        })}
+                                    </div>
                                 </div>
                             </div>
                         </div> : null}
@@ -1192,7 +1194,9 @@ function App() {
 
                     //spymaster cursor
                     if (teams.some(team => team.players[0] === player.id) && started && !debug) { 
-                        return <div className='spymasterCursor' id={'cursor-' + i} key={'cursor-' + i} style={{ left: ((player.x)), top: ((player.y)), borderColor: player.team, width: spymasterCursorSizeTarget, height: spymasterCursorSizeTarget}}>
+                        var size = player.id === socket.id ? spymasterCursorSizeTarget : 24;
+
+                        return <div className='spymasterCursor' id={'cursor-' + i} key={'cursor-' + i} style={{ left: ((player.x)), top: ((player.y)), borderColor: player.team, width: size, height: size}}>
                             {cards.map((card, j) => {
                                 var cardContainer = document.getElementsByClassName('cardContainer')[0].getBoundingClientRect();
                                 const cursorElement = document.getElementById('cursor-' + i);
