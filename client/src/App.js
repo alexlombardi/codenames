@@ -1038,7 +1038,7 @@ function App() {
                         </div> : null}
                         {teams.some(team => team.players[0] === socket.id) && started ? <div className='spymasterColorListOuter'>
                             <div className='spymasterColorList'>
-                                <div style={{width: '100%'}}>Spymaster cheat sheet:</div> 
+                                <div style={{width: '100%'}}>Spymaster cheat sheet</div> 
                                 <div className='spymasterColorColumnContainer'>
                                     <div className='spymasterColorColumn'>
                                         Red:
